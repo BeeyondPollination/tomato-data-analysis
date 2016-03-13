@@ -1,15 +1,9 @@
 
-# coding: utf-8
-
-# In[1]:
-
-# get_ipython().magic(u'matplotlib inline')
 import pandas as pd
 import numpy as np
 import os
 import re
 
-# In[ ]:
 dataFolderPath = 'D:\\System Folders\\Documents\\GitHub\\tomato-data-analysis'
 files = os.listdir(dataFolderPath)
 fileslist = []
@@ -35,7 +29,13 @@ for file in fileslist:
     #df.columns = [c.replace('(Y/N)', '') for c in df.columns]
     del df['Treated(Y/N)']
     del df['Difference']
+
+    if 'Broken_Sets' not in df.columns:
+        df['Broken_Sets'] = [0] * df.Device.count()
+
     df['Test_Day'] = day * df.Device.count()
+
+    print df.columns
 
     let2num = lambda x : ord(x)-0x40
     df.Device = df.Device.apply(let2num)
@@ -45,8 +45,6 @@ for file in fileslist:
 allData = pd.concat(dataList,ignore_index=True)
 
 allData.to_csv(dataFolderPath + '\\consolidatedData.csv',index=False)
-
-# In[ ]:
 
 
 
