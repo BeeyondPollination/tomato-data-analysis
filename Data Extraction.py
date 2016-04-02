@@ -11,7 +11,7 @@ fileslist = []
 for i in range(len(files)):
     datafile = files[i]
     print datafile
-    if datafile.startswith("data_set"):
+    if datafile.startswith("2016"):
         #print datafile
         fileslist += [datafile]
 
@@ -20,6 +20,9 @@ print fileslist
 dataList = []
 
 for file in fileslist:
+    print file
+    date = file.split('-',2)
+    print date
     day = [int(s) for s in re.findall(r'\d+',file)]
     print day
     #print dataFolderPath+file
@@ -44,7 +47,7 @@ for file in fileslist:
 
 allData = pd.concat(dataList,ignore_index=True)
 
-allData.to_csv(dataFolderPath + '\\consolidatedData.csv',index=False)
+#allData.to_csv(dataFolderPath + '\\consolidatedData.csv',index=False)
 
 
 
