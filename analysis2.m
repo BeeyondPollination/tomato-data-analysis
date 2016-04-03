@@ -58,12 +58,44 @@ for i = 1:size(allData,1)
         if dataMultiArray(row(1),row(2),floor(row(3)/100),rem(row(3),100),length(testDates),1) ~= 0
             % display('Data already exists for:')
             % display([row(1:3) row(length(row)-2:length(row))])
-        % otherwise enter the data for that day
-        else     
+            % otherwise enter the data for that day
+        else
             dataMultiArray(row(1),row(2),floor(row(3)/100),rem(row(3),100),length(testDates),:) = row(4:11);
         end
     end
 end
+
+% Check for missing
+missingData = [];
+for device = 1:size(dataMultiArray,1)
+    for plant = 1:size(dataMultiArray,2)
+        for head = 1:2
+            for truss = 1:size(dataMultiArray,4)
+                recorded = false;
+                for day = 1:length(testDates)
+                    if ~recorded && dataMultiArray(device,plant,head,truss,day,1) ~= 0
+                        recorded = true;
+                    elseif recorded && dataMultiArray(device,plant,head,truss,day,1) == 0
+                        missingData = [missingData; device,plant,head,truss,day];
+                    end
+                end
+            end
+        end
+    end
+end
+missingData = sortrows(missingData,5);
+letters = ['A' 'B' 'C' 'E' 'F'];
+
+missingFile = fopen('D:\System Folders\Documents\GitHub\tomato-data-analysis\missingData.txt','w');
+missingDataEasy = {};
+for i = 1:size(missingData,1)
+    entry = missingData(i,:);
+    missingDataEasy{i} = (strcat(letters(entry(1)), num2str(entry(2)), '_', num2str(entry(3)*100+entry(4)), '_', datestr(testDates(entry(5)))));
+    fprintf(missingFile, '%s\n', missingDataEasy{i});
+end
+fclose(missingFile);
+
+
 
 testDays = split(between(day1,testDates),'d')+1;
 
@@ -103,7 +135,7 @@ close all
 % [day, average %set, average %brok] for each day.
 % trussTotals contains a 2D vector for each (device, truss) combination
 % that contains the [total flowers, total set, total broken] for each day
-averageSetBrok = zeros(2,5,5,length(testDays),2);
+averageSetBrok = zeros(2,5,5,length(testDays),3);
 trussTotals = zeros(2,5,5,length(testDays),3);
 % set 1 is cherry, set 2 is beefsteak
 for species = 1:2
@@ -118,15 +150,16 @@ for species = 1:2
                 for plant = plantSet{device};
                     for head = 1:2
                         if percentSetBrok(device,plant,head,truss,day,1) ~= 0
-                                tempPercent = [tempPercent; percentSetBrok(device,plant,head,truss,day,2:end)];
-                                tempTotal = [tempTotal; totals(device,plant,head,truss,day,2:end)];
+                            tempPercent = [tempPercent; percentSetBrok(device,plant,head,truss,day,2:end)];
+                            tempTotal = [tempTotal; totals(device,plant,head,truss,day,2:end)];
                         end
                     end
                 end
                 tempAv = mean(tempPercent,1);
                 tempTrussTotal = sum(tempTotal,1);
                 if ~isempty(tempAv)
-                    averageSetBrok(species,device,truss,day,:) = tempAv;
+                    stDev = std(squeeze(tempPercent(:,1)));
+                    averageSetBrok(species,device,truss,day,:) = [squeeze(tempAv)' stDev];
                     trussTotals(species,device,truss,day,:) = tempTrussTotal;
                 end
             end
@@ -134,7 +167,7 @@ for species = 1:2
     end
 end
 
-%% Plot data for truss 1, cherry
+%% Plot data for truss 1, cherry, error is broken
 figure
 grid on
 hold on
@@ -153,7 +186,26 @@ xlabel('Test day')
 ylabel('Percent set')
 xlim([0, testDays(length(testDays))+1]);
 
-%% Plot data for truss 1, beefsteak
+%% Plot data for truss 1, cherry, error is STD
+figure
+grid on
+hold on
+colors = ['y','m','c','r','g'];
+
+% change this to plot a different truss level.
+truss = 1;
+species = 1;
+
+for i = 1:size(averageSetBrok,2)
+    errorbar(testDays,averageSetBrok(species,i,truss,:,1),averageSetBrok(species,i,truss,:,3),'LineWidth',2)
+end
+legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest')
+title('Cherry Tomatoes: Rate of Setting')
+xlabel('Test day')
+ylabel('Percent set')
+xlim([0, testDays(length(testDays))+1]);
+
+%% Plot data for truss 1, beefsteak, error is broken
 figure
 grid on
 hold on
@@ -191,3 +243,20 @@ xlabel('Test day')
 ylabel('Number of flowers')
 xlim([0, testDays(length(testDays))+1]);
 
+%% Plot bar chart of devices on a day
+close(figure(3))
+figure(3)
+grid on
+hold on
+
+% change this to plot a different truss level.
+truss = 2;
+species = 1;
+day = 8;
+
+bar([1:5],averageSetBrok(species,:,truss,day,1),'LineWidth',2);
+errorbar([1:5],squeeze(averageSetBrok(species,:,truss,day,1)),squeeze(averageSetBrok(species,:,truss,day,3)),'.')
+title(['Cherry Tomatoes set on Day ',num2str(day)])
+xlabel('Test Device')
+ylabel('Percentage Set')
+set(gca,'XTick',1:5,'XTickLabel',{'Pulsed Air','Sound','Contact Vibration','Untreated','Bee Pollinated'})
