@@ -48,8 +48,8 @@ for i = 1:size(allData,1)
     % Data sets will be organized by {device, plant, head, truss, day}
     if row(4)==0 && length(testDates) > 1
         if dataMultiArray(row(1),row(2),floor(row(3)/100),rem(row(3),100),length(testDates)-1,1) ~= 0
-            %display('Data missing for:')
-            %display([row(1:3) row(length(row)-2:length(row))])
+            display('Data missing for:')
+            display([row(1:3) row(length(row)-2:length(row))])
         end
     end
     
@@ -102,7 +102,7 @@ close all
 % averageSetBrok contains a 2D vector for each (device, truss) combination that contains the
 % [day, average %set, average %brok] for each day.
 % trussTotals contains a 2D vector for each (device, truss) combination
-% that contains the [day, total flowers, total set, total broken] for each day
+% that contains the [total flowers, total set, total broken] for each day
 averageSetBrok = zeros(2,5,5,length(testDays),2);
 trussTotals = zeros(2,5,5,length(testDays),3);
 % set 1 is cherry, set 2 is beefsteak
@@ -151,7 +151,7 @@ legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','L
 title('Cherry Tomatoes: Rate of Setting')
 xlabel('Test day')
 ylabel('Percent set')
-xlim([0, testDates(length(testDates))+1]);
+xlim([0, testDays(length(testDays))+1]);
 
 %% Plot data for truss 1, beefsteak
 figure
@@ -164,13 +164,13 @@ truss = 1;
 species = 2;
 
 for i = 1:size(averageSetBrok,2)
-    errorbar(averageSetBrok{species,i,truss}(:,1),averageSetBrok{species,i,truss}(:,2),zeros(length(averageSetBrok{species,i,truss}(:,1)),1),averageSetBrok{species,i,truss}(:,3),'LineWidth',2)
+    errorbar(testDays,averageSetBrok(species,i,truss,:,1),zeros(length(averageSetBrok(species,i,truss,:,1)),1),averageSetBrok(species,i,truss,:,2),'LineWidth',2)
 end
 legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest')
 title('Beefsteak Tomatoes: Rate of Setting')
 xlabel('Test day')
 ylabel('Percent set')
-xlim([0, testDates(length(testDates))+1]);
+xlim([0, testDays(length(testDays))+1]);
 
 %% Plot totals data, cherry
 figure
@@ -179,15 +179,15 @@ hold on
 colors = ['y','m','c','r','g'];
 
 truss = 1;
-species = 1;
-totalType = 3; % 2 for total flowers, 3 for total set, 4 for total broken
+species = 2;
+totalType = 1; % 1 for total flowers, 2 for total set, 3 for total broken
 
 for i = 1:size(averageSetBrok,2)
-    plot(trussTotals{species,i,truss}(:,1),trussTotals{species,i,truss}(:,totalType),'LineWidth',2)
+    plot(testDays,squeeze(trussTotals(species,i,truss,:,totalType)),'LineWidth',2)
 end
 legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest')
 title('Cherry Tomatoes: Total Flowers')
 xlabel('Test day')
 ylabel('Number of flowers')
-xlim([0, testDates(length(testDates))+1]);
+xlim([0, testDays(length(testDays))+1]);
 
