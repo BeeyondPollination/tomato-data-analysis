@@ -65,6 +65,7 @@ for fileName in fileslist:
 
 allData = pd.concat(dataList, ignore_index=True)
 
+print allData.columns
 saveFileName = '\\consolidatedData'+today.isoformat()+'.csv'
 print saveFileName
 

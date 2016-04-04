@@ -1,4 +1,4 @@
-Device,Plant,Truss,Total flowers,Budding,Transition B to O,Open,Closed,Setting,Broken Sets,Out of sequence,Treated(Y/N)
+Device,Plant,Truss,Total flowers,Budding,Transition B to O,Open,Closed,Setting,Broken Sets,Out of Sequence,Treated(Y/N)
 A,1,101,18,,,,,16,,2,
 A,1,102,19,,,,,15,,,
 A,1,103,18,,,,,12,,,
