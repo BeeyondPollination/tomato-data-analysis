@@ -11,6 +11,8 @@ threeReps = {[9:10],[11:12],[13:14],0};
 beefPlantReps = {threeReps,threeReps,threeReps};
 speciesPlants = {cherryPlants,beefPlants};
 speciesPlantReps = {cherryPlantReps,beefPlantReps};
+dataLabels = {'Set', 'Broken', 'Harvestable', 'Unpollinated'};
+speciesLabels = {'Cherry','Beefsteak'};
 
 %% Extract all data to matlab
 %allData = csvread('D:\System Folders\Documents\GitHub\tomato-data-analysis\consolidatedData.csv',1,0);
@@ -103,12 +105,12 @@ fclose(missingFile);
 testDays = split(between(day1,testDates,'Days'),'d')+1;
 
 %% Get percentage set for a truss over time.
-% percentSet will contain a vector of [day, %set, %broken, %harvestable] entries.
+% percentSet will contain a vector of [day, %set, %broken, %harvestable, %unpollinated] entries.
 % totals will contain a vector of [day, total flowers, total set,
-% total broken, total harvestable]
+% total broken, total harvestable, total unpollinated]
 % organized by {device, plant, head, truss, day, [day, %set, %broken, %harvestable]}
-percents = zeros(5,14,2,5,20,4);
-totals = zeros(5,14,2,5,20,5);
+percents = zeros(5,14,2,5,20,5);
+totals = zeros(5,14,2,5,20,6);
 
 for device = 1:size(dataMultiArray,1)
     for plant = 1:size(dataMultiArray,2)
@@ -120,12 +122,14 @@ for device = 1:size(dataMultiArray,1)
                         percentSet = 100*dayData(6)/dayData(1);
                         percentBrok = 100*dayData(7)/dayData(1);
                         percentHarvestable = 100*(dayData(6)-dayData(8))/dayData(1);
+                        percentUnpollinated = 100*dayData(8)/dayData(1);
                         totalFlowers = dayData(1);
                         totalSet = dayData(6);
                         totalBroken = dayData(7);
                         totalHarvestable = dayData(6)-dayData(8);
-                        percents(device,plant,head,truss,day,:) = [testDays(day), percentSet, percentBrok, percentHarvestable];
-                        totals(device,plant,head,truss,day,:) = [testDays(day), totalFlowers, totalSet, totalBroken, totalHarvestable];
+                        totalUnpollinated = dayData(8);
+                        percents(device,plant,head,truss,day,:) = [testDays(day), percentSet, percentBrok, percentHarvestable, percentUnpollinated];
+                        totals(device,plant,head,truss,day,:) = [testDays(day), totalFlowers, totalSet, totalBroken, totalHarvestable, totalUnpollinated];
                     end
                 end
             end
@@ -138,8 +142,8 @@ end
 close all
 
 % averageRepPercents contains a 2D vector for each (device, rep, truss) combination that contains the
-% [day, average %set, average %brok, average %harvestable, std dev %set, std dev %harvestable] for each day.
-avgRepPercents = zeros(2,5,5,4,length(testDays),5);
+% [day, average %set, average %brok, average %harvestable, average %unpollinated, std dev %set, std dev %broken, std dev %harvestable, std dev %unpollinated] for each day.
+avgRepPercents = zeros(2,5,5,4,length(testDays),8);
 % set 1 is cherry, set 2 is beefsteak
 for species = 1:2
     for device = 1:3
@@ -165,9 +169,8 @@ for species = 1:2
                     tempAv = mean(tempPercent,1);
                     tempTrussTotal = sum(tempTotal,1);
                     if ~isempty(tempAv)
-                        stdDevRepSet = std(squeeze(tempPercent(:,1)));
-                        stdDevRepHarvestable = std(squeeze(tempPercent(:,3)));
-                        avgRepPercents(species,device,truss,rep,day,:) = [squeeze(tempAv)' stdDevRepSet stdDevRepHarvestable];
+                        stdDevRep = [std(squeeze(tempPercent(:,1))) std(squeeze(tempPercent(:,2))) std(squeeze(tempPercent(:,3))) std(squeeze(tempPercent(:,4)))];
+                        avgRepPercents(species,device,truss,rep,day,:) = [squeeze(tempAv)' stdDevRep];
                     end
                 end
             end
@@ -181,34 +184,42 @@ grid on
 hold on
 
 % change this to plot a different truss level.
-truss = 2;
+truss = 1;
+data = 3; % 1 - percent set, 2 - percent broken, 3 - percent harvestable, 4 - percent unpollinated
+
+% Cherry tomatoes
 species = 2;
-day = 11;
+day = 13;
 
 groupedRepData = [];
 groupedRepError = [];
 for device = 1:3
-    groupedRepData = [groupedRepData; squeeze(avgRepPercents(species,device,truss,:,day,1))'];
-    groupedRepError = [groupedRepError; squeeze(avgRepPercents(species,device,truss,:,day,4))'];
+    groupedRepData = [groupedRepData; squeeze(avgRepPercents(species,device,truss,:,day,data))'];
+    groupedRepError = [groupedRepError; squeeze(avgRepPercents(species,device,truss,:,day,data+4))'];
 end
-bar(groupedRepData,'grouped','BarWidth',1);
-title(['Cherry Tomatoes set on Day ',num2str(day)])
-xlabel('Device')
-ylabel('Percentage Set')
-set(gca,'XTick',1:5,'XTickLabel',{'Pulsed Air','Sound','Contact Vibration'})
+
+bar(groupedRepData,'grouped','BarWidth',1); 
+title(strcat(speciesLabels(species), {' Tomatoes: Comparison between Replication Blocks on Day '},num2str(day)),'FontSize',16);
+xlabel('Device','FontSize',14,'FontWeight','bold');
+ylabel(strcat({'Percentage '},dataLabels(data)),'FontSize',14,'FontWeight','bold');
+lh = legend('Replication 1','Replication 2','Replication 3');
+set(lh,'FontSize',12);
+set(gca,'XTick',1:5,'XTickLabel',{'Pulsed Air','Sound','Contact Vibration'},'FontSize',12)
+
 groupwidth = min(0.8, 4/(4+1.5)); 
 for i = 1:4
     x = (1:3) - groupwidth/2 + (2*i-1) * groupwidth / (2*4);
     errorbar(x, groupedRepData(:,i), groupedRepError(:,i), 'k', 'linestyle', 'none');
 end
+
 %% Calculate average percent set
 
 % averagePercents contains a 2D vector for each (device, truss) combination that contains the
-% [day, average %set, average %brok, average %harvestable, std dev %set, std dev %harvestable] for each day.
+% [day, average %set, average %brok, average %harvestable, average %unpollinated, std dev %set, std dev %broken, std dev %harvestable, std dev %unpollinated] for each day.
 % trussTotals contains a 2D vector for each (device, truss) combination
-% that contains the [total flowers, total set, total broken, total harvestable] for each day
-averagePercents = zeros(2,5,5,length(testDays),5);
-trussTotals = zeros(2,5,5,length(testDays),4);
+% that contains the [total flowers, total set, total broken, total harvestable, total unpollinated] for each day
+averagePercents = zeros(2,5,5,length(testDays),8);
+trussTotals = zeros(2,5,5,length(testDays),5);
 % set 1 is cherry, set 2 is beefsteak
 for species = 1:2
     for device = 1:5
@@ -230,9 +241,8 @@ for species = 1:2
                 tempAv = mean(tempPercent,1);
                 tempTrussTotal = sum(tempTotal,1);
                 if ~isempty(tempAv)
-                    stdDevSet = std(squeeze(tempPercent(:,1)));
-                    stdDevHarvestable = std(squeeze(tempPercent(:,3)));
-                    averagePercents(species,device,truss,day,:) = [squeeze(tempAv)' stdDevSet stdDevHarvestable];
+                    stdDevRep = [std(squeeze(tempPercent(:,1))) std(squeeze(tempPercent(:,2))) std(squeeze(tempPercent(:,3))) std(squeeze(tempPercent(:,4)))];
+                    averagePercents(species,device,truss,day,:) = [squeeze(tempAv)' stdDevRep];
                     trussTotals(species,device,truss,day,:) = tempTrussTotal;
                 end
             end
@@ -253,10 +263,11 @@ species = 1;
 for i = 1:size(averagePercents,2)
     errorbar(testDays,averagePercents(species,i,truss,:,1),zeros(length(averagePercents(species,i,truss,:,1)),1),averagePercents(species,i,truss,:,2),'LineWidth',2)
 end
-legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest')
-title('Cherry Tomatoes: Rate of Setting')
-xlabel('Test day')
-ylabel('Percent set')
+lh = legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest');
+set(lh,'FontSize',12);
+title('Cherry Tomatoes: Rate of Setting','FontSize',16);
+xlabel('Test day','FontSize',14,'FontWeight','bold');
+ylabel('Percentage set','FontSize',14,'FontWeight','bold');
 xlim([0, testDays(length(testDays))+1]);
 
 %% Plot data for truss 1, cherry, error is STDDEV
@@ -270,12 +281,13 @@ truss = 1;
 species = 1;
 
 for i = 1:size(averagePercents,2)
-    errorbar(testDays,averagePercents(species,i,truss,:,1),averagePercents(species,i,truss,:,4),'LineWidth',2)
+    errorbar(testDays,averagePercents(species,i,truss,:,1),averagePercents(species,i,truss,:,5),'LineWidth',2)
 end
-legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest')
-title('Cherry Tomatoes: Rate of Setting')
-xlabel('Test day')
-ylabel('Percent set')
+lh = legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest');
+set(lh,'FontSize',12);
+title('Cherry Tomatoes: Rate of Setting','FontSize',16);
+xlabel('Test day','FontSize',14,'FontWeight','bold');
+ylabel('Percentage set','FontSize',14,'FontWeight','bold');
 xlim([0, testDays(length(testDays))+1]);
 
 %% Plot data for truss 1, beefsteak, error is broken
@@ -291,11 +303,13 @@ species = 2;
 for i = 1:size(averagePercents,2)
     errorbar(testDays,averagePercents(species,i,truss,:,1),zeros(length(averagePercents(species,i,truss,:,1)),1),averagePercents(species,i,truss,:,2),'LineWidth',2)
 end
-legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest')
-title('Beefsteak Tomatoes: Rate of Setting')
-xlabel('Test day')
-ylabel('Percent set')
-xlim([0, testDays(length(testDays))+1]);
+lh = legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest')
+set(lh,'FontSize',12);
+title('Beefsteak Tomatoes: Rate of Setting','FontSize',16);
+xlabel('Test day','FontSize',14,'FontWeight','bold');
+ylabel('Percentage set','FontSize',14,'FontWeight','bold');
+xlim([0, testDays(length(testDays))-12]);
+set(gca,'FontSize',12);
 
 %% Plot totals data, cherry
 figure(5)
@@ -316,36 +330,21 @@ xlabel('Test day')
 ylabel('Number of flowers')
 xlim([0, testDays(length(testDays))+1]);
 
-%% Plot bar chart of percent set by device on a day
+%% Plot bar chart comparison of devices on a day
+close(figure(6))
 figure(6)
 grid on
 hold on
 
 % change this to plot a different truss level.
-truss = 2;
-species = 1;
-day = 8;
+truss = 1;
+species = 2;
+day = 14;
+data = 3; % 1 - percent set, 2 - percent broken, 3 - percent harvestable, 4 - percent unpollinated
 
-bar([1:5],averagePercents(species,:,truss,day,1),'LineWidth',2);
-errorbar([1:5],squeeze(averagePercents(species,:,truss,day,1)),squeeze(averagePercents(species,:,truss,day,4)),'.')
-title(['Cherry Tomatoes set on Day ',num2str(day)])
-xlabel('Test Device')
-ylabel('Percentage Set')
-set(gca,'XTick',1:5,'XTickLabel',{'Pulsed Air','Sound','Contact Vibration','Untreated','Bee Pollinated'})
-
-%% Plot bar chart of percent harvestable by device on a day
-figure(7)
-grid on
-hold on
-
-% change this to plot a different truss level.
-truss = 2;
-species = 1;
-day = 13;
-
-bar([1:5],averagePercents(species,:,truss,day,3),'LineWidth',2);
-errorbar([1:5],squeeze(averagePercents(species,:,truss,day,3)),squeeze(averagePercents(species,:,truss,day,5)),'.')
-title(['Cherry Tomatoes harvestable on Day ',num2str(day)])
-xlabel('Test Device')
-ylabel('Percentage Harvestable')
-set(gca,'XTick',1:5,'XTickLabel',{'Pulsed Air','Sound','Contact Vibration','Untreated','Bee Pollinated'})
+bar([1:5],averagePercents(species,:,truss,day,data),'LineWidth',2);
+errorbar([1:5],squeeze(averagePercents(species,:,truss,day,data)),squeeze(averagePercents(species,:,truss,day,data+4)),'.')
+title(strcat(speciesLabels(species),{' Tomatoes: Percent '}, dataLabels(data), {' on Day '}, num2str(testDays(day))),'FontSize',16)
+xlabel('Test Device','FontSize',14,'FontWeight','bold')
+ylabel(strcat({'Percentage '}, dataLabels(data)),'FontSize',14,'FontWeight','bold')
+set(gca,'XTick',1:5,'XTickLabel',{'Pulsed Air','Sound','Contact Vibration','Untreated','Bee Pollinated'},'FontSize',12)
