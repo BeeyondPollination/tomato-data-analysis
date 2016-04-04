@@ -100,7 +100,7 @@ for i = 1:size(missingData,1)
 end
 fclose(missingFile);
 
-testDays = split(between(day1,testDates),'d')+1;
+testDays = split(between(day1,testDates,'Days'),'d')+1;
 
 %% Get percentage set for a truss over time.
 % percentSet will contain a vector of [day, %set, %broken, %harvestable] entries.
@@ -139,10 +139,10 @@ close all
 
 % averageRepPercents contains a 2D vector for each (device, rep, truss) combination that contains the
 % [day, average %set, average %brok, average %harvestable, std dev %set, std dev %harvestable] for each day.
-averageRepPercents = zeros(2,5,5,4,length(testDays),5);
+avgRepPercents = zeros(2,5,5,4,length(testDays),5);
 % set 1 is cherry, set 2 is beefsteak
 for species = 1:2
-    for device = 1:5
+    for device = 1:3
         for truss = 1:size(dataMultiArray,4)
             for rep = 1:4
                 for day = 1:length(testDays)
@@ -150,21 +150,24 @@ for species = 1:2
                     % (device, truss, rep, day)
                     tempPercent = [];
                     tempTotal = [];
-                    plantSet = speciesPlantReps{species{rep}};
-                    for plant = plantSet{device};
-                        for head = 1:2
-                            if percents(device,plant,head,truss,day,1) ~= 0
-                                tempPercent = [tempPercent; percents(device,plant,head,truss,day,2:end)];
-                                tempTotal = [tempTotal; totals(device,plant,head,truss,day,2:end)];
+                    speciesSet = speciesPlantReps{species};
+                    plantSet = speciesSet{device};
+                    for plant = plantSet{rep};
+                        if plant ~= 0
+                            for head = 1:2
+                                if percents(device,plant,head,truss,day,1) ~= 0
+                                    tempPercent = [tempPercent; percents(device,plant,head,truss,day,2:end)];
+                                    tempTotal = [tempTotal; totals(device,plant,head,truss,day,2:end)];
+                                end
                             end
                         end
                     end
                     tempAv = mean(tempPercent,1);
                     tempTrussTotal = sum(tempTotal,1);
                     if ~isempty(tempAv)
-                        stdDevSet = std(squeeze(tempPercent(:,1)));
-                        stdDevHarvestable = std(squeeze(tempPercent(:,3)));
-                        averageRepPercents(species,device,truss,rep,day,:) = [squeeze(tempAv)' stdDevSet stdDevHarvestable];
+                        stdDevRepSet = std(squeeze(tempPercent(:,1)));
+                        stdDevRepHarvestable = std(squeeze(tempPercent(:,3)));
+                        avgRepPercents(species,device,truss,rep,day,:) = [squeeze(tempAv)' stdDevRepSet stdDevRepHarvestable];
                     end
                 end
             end
@@ -172,6 +175,32 @@ for species = 1:2
     end
 end
 
+%% Plot comparison between replication blocks
+figure(1)
+grid on
+hold on
+
+% change this to plot a different truss level.
+truss = 2;
+species = 2;
+day = 11;
+
+groupedRepData = [];
+groupedRepError = [];
+for device = 1:3
+    groupedRepData = [groupedRepData; squeeze(avgRepPercents(species,device,truss,:,day,1))'];
+    groupedRepError = [groupedRepError; squeeze(avgRepPercents(species,device,truss,:,day,4))'];
+end
+bar(groupedRepData,'grouped','BarWidth',1);
+title(['Cherry Tomatoes set on Day ',num2str(day)])
+xlabel('Device')
+ylabel('Percentage Set')
+set(gca,'XTick',1:5,'XTickLabel',{'Pulsed Air','Sound','Contact Vibration'})
+groupwidth = min(0.8, 4/(4+1.5)); 
+for i = 1:4
+    x = (1:3) - groupwidth/2 + (2*i-1) * groupwidth / (2*4);
+    errorbar(x, groupedRepData(:,i), groupedRepError(:,i), 'k', 'linestyle', 'none');
+end
 %% Calculate average percent set
 
 % averagePercents contains a 2D vector for each (device, truss) combination that contains the
@@ -212,7 +241,7 @@ for species = 1:2
 end
 
 %% Plot data for truss 1, cherry, error is broken
-figure(1)
+figure(2)
 grid on
 hold on
 colors = ['y','m','c','r','g'];
@@ -231,7 +260,7 @@ ylabel('Percent set')
 xlim([0, testDays(length(testDays))+1]);
 
 %% Plot data for truss 1, cherry, error is STDDEV
-figure(2)
+figure(3)
 grid on
 hold on
 colors = ['y','m','c','r','g'];
@@ -250,7 +279,7 @@ ylabel('Percent set')
 xlim([0, testDays(length(testDays))+1]);
 
 %% Plot data for truss 1, beefsteak, error is broken
-figure(3)
+figure(4)
 grid on
 hold on
 colors = ['y','m','c','r','g'];
@@ -269,7 +298,7 @@ ylabel('Percent set')
 xlim([0, testDays(length(testDays))+1]);
 
 %% Plot totals data, cherry
-figure(4)
+figure(5)
 grid on
 hold on
 colors = ['y','m','c','r','g'];
@@ -288,7 +317,7 @@ ylabel('Number of flowers')
 xlim([0, testDays(length(testDays))+1]);
 
 %% Plot bar chart of percent set by device on a day
-figure(5)
+figure(6)
 grid on
 hold on
 
@@ -305,7 +334,7 @@ ylabel('Percentage Set')
 set(gca,'XTick',1:5,'XTickLabel',{'Pulsed Air','Sound','Contact Vibration','Untreated','Bee Pollinated'})
 
 %% Plot bar chart of percent harvestable by device on a day
-figure(6)
+figure(7)
 grid on
 hold on
 
