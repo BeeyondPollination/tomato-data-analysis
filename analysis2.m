@@ -179,6 +179,7 @@ for species = 1:2
 end
 
 %% Plot comparison between replication blocks
+close(figure(1))
 figure(1)
 grid on
 hold on
@@ -188,7 +189,7 @@ truss = 1;
 data = 3; % 1 - percent set, 2 - percent broken, 3 - percent harvestable, 4 - percent unpollinated
 
 % Cherry tomatoes
-species = 2;
+species = 1;
 day = 13;
 
 groupedRepData = [];
@@ -198,15 +199,15 @@ for device = 1:3
     groupedRepError = [groupedRepError; squeeze(avgRepPercents(species,device,truss,:,day,data+4))'];
 end
 
-bar(groupedRepData,'grouped','BarWidth',1); 
-title(strcat(speciesLabels(species), {' Tomatoes: Comparison between Replication Blocks on Day '},num2str(day)),'FontSize',16);
+bar(groupedRepData,'grouped','BarWidth',1);
+title(strcat(speciesLabels(species), {' Tomatoes: Comparison between Replication Blocks on Day '},num2str(testDays(day))),'FontSize',16);
 xlabel('Device','FontSize',14,'FontWeight','bold');
 ylabel(strcat({'Percentage '},dataLabels(data)),'FontSize',14,'FontWeight','bold');
 lh = legend('Replication 1','Replication 2','Replication 3');
 set(lh,'FontSize',12);
 set(gca,'XTick',1:5,'XTickLabel',{'Pulsed Air','Sound','Contact Vibration'},'FontSize',12)
 
-groupwidth = min(0.8, 4/(4+1.5)); 
+groupwidth = min(0.8, 4/(4+1.5));
 for i = 1:4
     x = (1:3) - groupwidth/2 + (2*i-1) * groupwidth / (2*4);
     errorbar(x, groupedRepData(:,i), groupedRepError(:,i), 'k', 'linestyle', 'none');
@@ -251,47 +252,48 @@ for species = 1:2
 end
 
 %% Plot data for truss 1, cherry, error is broken
-figure(2)
-grid on
-hold on
-colors = ['y','m','c','r','g'];
-
-% change this to plot a different truss level.
-truss = 1;
-species = 1;
-
-for i = 1:size(averagePercents,2)
-    errorbar(testDays,averagePercents(species,i,truss,:,1),zeros(length(averagePercents(species,i,truss,:,1)),1),averagePercents(species,i,truss,:,2),'LineWidth',2)
+for species = 1:2
+    figure
+    grid on
+    hold on
+    colors = ['y','m','c','r','g'];
+    
+    % change this to plot a different truss level.
+    truss = 1;
+    
+    for i = 1:size(averagePercents,2)
+        errorbar(testDays,averagePercents(species,i,truss,:,1),zeros(length(averagePercents(species,i,truss,:,1)),1),averagePercents(species,i,truss,:,2),'LineWidth',2)
+    end
+    lh = legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest');
+    set(lh,'FontSize',12);
+    title(strcat(speciesLabels(species),{' Tomatoes: Rate of Setting'}),'FontSize',16);
+    xlabel('Test day','FontSize',14,'FontWeight','bold');
+    ylabel('Percentage set','FontSize',14,'FontWeight','bold');
+    xlim([0, testDays(length(testDays))+1]);
 end
-lh = legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest');
-set(lh,'FontSize',12);
-title('Cherry Tomatoes: Rate of Setting','FontSize',16);
-xlabel('Test day','FontSize',14,'FontWeight','bold');
-ylabel('Percentage set','FontSize',14,'FontWeight','bold');
-xlim([0, testDays(length(testDays))+1]);
 
 %% Plot data for truss 1, cherry, error is STDDEV
-figure(3)
-grid on
-hold on
-colors = ['y','m','c','r','g'];
-
-% change this to plot a different truss level.
-truss = 1;
-species = 1;
-
-for i = 1:size(averagePercents,2)
-    errorbar(testDays,averagePercents(species,i,truss,:,1),averagePercents(species,i,truss,:,5),'LineWidth',2)
+for species = 1:2
+    figure
+    grid on
+    hold on
+    
+    % change this to plot a different truss level.
+    truss = 1;
+    
+    for i = 1:size(averagePercents,2)
+        errorbar(testDays,averagePercents(species,i,truss,:,1),averagePercents(species,i,truss,:,5),'LineWidth',2)
+    end
+    lh = legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest');
+    set(lh,'FontSize',12);
+    title(strcat(speciesLabels(species),{' Tomatoes: Rate of Setting'}),'FontSize',16);
+    xlabel('Test day','FontSize',14,'FontWeight','bold');
+    ylabel('Percentage set','FontSize',14,'FontWeight','bold');
+    xlim([0, testDays(length(testDays))+1]);
 end
-lh = legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest');
-set(lh,'FontSize',12);
-title('Cherry Tomatoes: Rate of Setting','FontSize',16);
-xlabel('Test day','FontSize',14,'FontWeight','bold');
-ylabel('Percentage set','FontSize',14,'FontWeight','bold');
-xlim([0, testDays(length(testDays))+1]);
 
 %% Plot data for truss 1, beefsteak, error is broken
-figure(4)
+figure
 grid on
 hold on
 colors = ['y','m','c','r','g'];
@@ -303,7 +305,7 @@ species = 2;
 for i = 1:size(averagePercents,2)
     errorbar(testDays,averagePercents(species,i,truss,:,1),zeros(length(averagePercents(species,i,truss,:,1)),1),averagePercents(species,i,truss,:,2),'LineWidth',2)
 end
-lh = legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest')
+lh = legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest');
 set(lh,'FontSize',12);
 title('Beefsteak Tomatoes: Rate of Setting','FontSize',16);
 xlabel('Test day','FontSize',14,'FontWeight','bold');
@@ -312,39 +314,39 @@ xlim([0, testDays(length(testDays))-12]);
 set(gca,'FontSize',12);
 
 %% Plot totals data, cherry
-figure(5)
-grid on
-hold on
-colors = ['y','m','c','r','g'];
-
-truss = 1;
-species = 2;
-totalType = 1; % 1 for total flowers, 2 for total set, 3 for total broken
-
-for i = 1:size(averagePercents,2)
-    plot(testDays,squeeze(trussTotals(species,i,truss,:,totalType)),'LineWidth',2)
+for species = 1:2
+    figure
+    grid on
+    hold on
+    colors = ['y','m','c','r','g'];
+    
+    truss = 1;
+    totalType = 1; % 1 for total flowers, 2 for total set, 3 for total broken
+    
+    for i = 1:size(averagePercents,2)
+        plot(testDays,squeeze(trussTotals(species,i,truss,:,totalType)),'LineWidth',2)
+    end
+    legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest')
+    title(strcat(speciesLabels(species),{' Tomatoes: Total Flowers'}))
+    xlabel('Test day')
+    ylabel('Number of flowers')
+    xlim([0, testDays(length(testDays))+1]);
 end
-legend('Air Pulsing','Sound Radiation','Contact','Untreated','Bee Pollinated','Location','northwest')
-title('Cherry Tomatoes: Total Flowers')
-xlabel('Test day')
-ylabel('Number of flowers')
-xlim([0, testDays(length(testDays))+1]);
-
 %% Plot bar chart comparison of devices on a day
-close(figure(6))
-figure(6)
-grid on
-hold on
-
-% change this to plot a different truss level.
-truss = 1;
-species = 2;
-day = 14;
-data = 3; % 1 - percent set, 2 - percent broken, 3 - percent harvestable, 4 - percent unpollinated
-
-bar([1:5],averagePercents(species,:,truss,day,data),'LineWidth',2);
-errorbar([1:5],squeeze(averagePercents(species,:,truss,day,data)),squeeze(averagePercents(species,:,truss,day,data+4)),'.')
-title(strcat(speciesLabels(species),{' Tomatoes: Percent '}, dataLabels(data), {' on Day '}, num2str(testDays(day))),'FontSize',16)
-xlabel('Test Device','FontSize',14,'FontWeight','bold')
-ylabel(strcat({'Percentage '}, dataLabels(data)),'FontSize',14,'FontWeight','bold')
-set(gca,'XTick',1:5,'XTickLabel',{'Pulsed Air','Sound','Contact Vibration','Untreated','Bee Pollinated'},'FontSize',12)
+for species = 1:2
+    figure
+    grid on
+    hold on
+    
+    % change this to plot a different truss level.
+    truss = 1;
+    day = 14;
+    data = 3; % 1 - percent set, 2 - percent broken, 3 - percent harvestable, 4 - percent unpollinated
+    
+    bar([1:5],averagePercents(species,:,truss,day,data),'LineWidth',2);
+    errorbar([1:5],squeeze(averagePercents(species,:,truss,day,data)),squeeze(averagePercents(species,:,truss,day,data+4)),'.','LineWidth',2)
+    title(strcat(speciesLabels(species),{' Tomatoes: Percent '}, dataLabels(data), {' on Day '}, num2str(testDays(day))),'FontSize',16)
+    xlabel('Test Device','FontSize',14,'FontWeight','bold')
+    ylabel(strcat({'Percentage '}, dataLabels(data)),'FontSize',14,'FontWeight','bold')
+    set(gca,'XTick',1:5,'XTickLabel',{'Pulsed Air','Sound','Contact Vibration','Untreated','Bee Pollinated'},'FontSize',12)
+end
